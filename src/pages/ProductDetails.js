@@ -1,12 +1,26 @@
 import {Helmet} from 'react-helmet-async';
 // @mui
-import {Box, Button, Container, Divider, IconButton, Input, Stack, Typography} from '@mui/material';
+import {
+    Box,
+    Button,
+    Container,
+    Divider,
+    IconButton,
+    Input,
+    Stack,
+    ToggleButtonGroup,
+    ToggleButton,
+    Typography, Grid, Rating
+} from '@mui/material';
 import {useEffect, useState} from "react";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import {styled} from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import {isNull} from "lodash";
 import {fCurrency} from "../utils/formatNumber";
 import {Icon} from "../components/icon/Icon";
 import Label from "../components/label";
+import CartWidget from "../sections/@dashboard/products/ProductCartWidget";
 
 const ChevronButton = styled(IconButton)(({theme}) => ({
     width: '40px',
@@ -15,6 +29,156 @@ const ChevronButton = styled(IconButton)(({theme}) => ({
     top: '50%',
     transform: 'translateY(-50%)',
 }))
+
+export default function ProductDetails(props) {
+    const {product: {name, images, price, discount, quantity, label, description, variations}} = props;
+    const [selectedVariations, setSelectedVariations] = useState(() => {
+        const initial = {};
+        variations.forEach(variation => {
+            // initial[variation.name] = Math.floor(variation.variationOptions.length / 2)
+            initial[variation.name] = null
+        })
+        return initial;
+    })
+
+    const largeScreen = useMediaQuery(theme => theme.breakpoints.up('md'));
+
+    const imageViewerProps = {
+        images,
+        sx: {
+            maxWidth: '450px'
+        }
+    }
+
+    const Prices = (props) => {
+        const {...rootProps} = props;
+
+        const [charge, setCharge] = useState(0)
+
+        useEffect(() => {
+            let ans = 0;
+            Object.values(selectedVariations).forEach((variation, index) => {
+                ans += isNull(variation) ? 0 : variations[index].variationOptions[variation].charge;
+            })
+            setCharge(ans)
+            console.log(charge)
+        }, [selectedVariations])
+
+        return <Box {...rootProps}>
+            <Typography>
+                List price:&nbsp;
+                <Typography
+                    component="span"
+                    variant="body1"
+                    sx={{
+                        color: 'text.disabled',
+                        textDecoration: 'line-through',
+                    }}
+                >
+                    {fCurrency(price + charge)}
+                </Typography>
+            </Typography>
+            <Typography>
+                Top deal:&nbsp;
+                <Typography variant="h5" component='span' sx={{color: 'primary.main'}}>
+                    &nbsp;
+                    {discount && fCurrency(discount + charge)}
+                </Typography>
+            </Typography>
+            <Typography>
+                You save:&nbsp;
+                <Typography component='span' sx={{color: 'primary.main'}}>
+                    &nbsp;
+                    {fCurrency(price - discount)}
+                    &nbsp;
+                    ({((price - discount) / price * 100).toFixed(2)}%)
+                </Typography>
+            </Typography>
+        </Box>
+    }
+    const Variations = (props) => {
+        const {...rootProps} = props;
+        const handleChange = (e, variation, val) => {
+            const clone = {...selectedVariations}
+            clone[variation.name] = val;
+            setSelectedVariations(clone);
+        }
+
+        return (
+            <Stack spacing={1} {...rootProps}>
+                {variations.map(variation => (
+                    <Box key={variation.name}>
+                        <Typography>
+                            {variation.name}
+                        </Typography>
+                        <ToggleButtonGroup
+                            size='small'
+                            exclusive
+                            value={selectedVariations[variation.name]}
+                            color={'primary'}
+                            onChange={(e, val) => handleChange(e, variation, val)}
+                        >
+                            {variation.variationOptions.map((option, index) => (
+                                <ToggleButton
+                                    value={index}
+                                    key={index}
+                                >
+                                    {option.name}
+                                </ToggleButton>
+                            ))}
+                        </ToggleButtonGroup>
+                    </Box>
+                ))}
+            </Stack>
+        )
+
+    }
+
+    return (
+        <>
+            <Helmet>
+                <title>{name}</title>
+            </Helmet>
+
+            <Container>
+                <CartWidget/>
+                <Typography variant="h4" sx={{mb: 5}}>
+                    Product Details
+                </Typography>
+                <Stack
+                    direction = {largeScreen ? 'row' : 'column-reverse'}
+                    spacing={3}
+                    sx={{mb: 5}}
+                >
+                    <ImageViewer {...imageViewerProps}/>
+                    <Box sx={{flex: 1}}>
+                        <ProductName {...{label, name}}/>
+                        <Stack
+                            direction='row'
+                            sx={{alignItems: 'center'}}
+                        >
+                            <Rating name="read-only" value={3.75} readOnly />
+                            &nbsp;
+                            <Typography>(1,273)</Typography>
+                        </Stack>
+                        <Divider sx={{mb: 3}}/>
+                        <Stack spacing={3}>
+                            <Prices/>
+                            <Variations/>
+                            <AddToCart quantity={quantity}/>
+                        </Stack>
+                    </Box>
+                </Stack>
+                {description.split('\n').map(paragraph => (
+                    <Typography
+                        paragraph
+                        sx={{textIndent: '20px', textAlign: 'justify'}}
+                    >{paragraph}</Typography>
+                ))}
+            </Container>
+        </>
+    );
+}
 
 function ImageViewer(props) {
     const {images, ...rootProps} = props;
@@ -105,7 +269,7 @@ function ImageViewer(props) {
                             borderColor: 'primary.main'
                         }}
                         component='img' src={img}
-                        onMouseEnter={() => setCurrentImage(id)}
+                        onClick={() => setCurrentImage(id)}
                     />
                 )}
                 <ChevronButton
@@ -132,238 +296,106 @@ function ImageViewer(props) {
     </>
 }
 
-export default function ProductDetails(props) {
-    const {product: {name, images, price, discount, quantity, label}} = props;
+function ProductName(props) {
+    const {name, label, ...rootProps} = props;
+
+    return <Stack {...rootProps} direction='row' spacing={2} sx={{alignItems: 'center'}}>
+        <Typography variant="h4" noWrap>
+            {name}
+        </Typography>
+        <Label
+            variant="filled"
+            color={(label.name === 'sale' && 'error') || 'info'}
+            sx={{
+                textTransform: 'uppercase',
+            }}
+        >
+            {label.name}
+        </Label>
+    </Stack>
+}
+
+const AddToCart = (props) => {
+    const {quantity, ...rootProps} = props;
     const [currentQuantity, setCurrentQuantity] = useState(1)
+    const largeScreen = useMediaQuery(theme => theme.breakpoints.up('md'));
     const handleChangeQuantity = (val) => {
         const newQuantity = currentQuantity + val;
         if (newQuantity > 0 && newQuantity <= quantity) {
             setCurrentQuantity(newQuantity);
         }
     }
-    const imageViewerProps = {
-        images,
-        sx: {
-            width: '450px'
-        }
-    }
 
-    return (
-        <>
-            <Helmet>
-                <title> Dashboard: Product Details | Minimal UI </title>
-            </Helmet>
+    return <Stack
+        {...rootProps}
+        direction={largeScreen ? 'row' : 'column'}
+        spacing={largeScreen ? 4 : 2}
+    >
+        <Stack direction='row'
+               sx={{alignItems: 'center'}}
+        >
+            <Typography
+                component='span'
+                sx={{lineHeight: '32px'}}
+            >
+                Quantity:&nbsp;
+            </Typography>
+            <Button
+                variant={currentQuantity !== 1 && 'text' || 'disabled'}
+                size='small'
+                sx={{
+                    height: '32px',
+                    width: '32px',
+                    minWidth: '32px',
+                }}
+                onClick={() => handleChangeQuantity(-1)}
+            >-</Button>
+            <Input
+                value={currentQuantity}
+                sx={{
+                    width: '50px',
+                    height: '32px',
+                    '& .MuiInputBase-input': {
+                        textAlign: 'center',
+                    }
+                }}
+            />
+            <Button
+                variant={currentQuantity !== quantity && 'text' || 'disabled'}
+                size='small'
+                sx={{
+                    height: '32px',
+                    width: '32px',
+                    minWidth: '32px',
+                }}
+                onClick={() => handleChangeQuantity(1)}
+            >+</Button>
+        </Stack>
 
-            <Container>
-                <Typography variant="h4" sx={{mb: 5}}>
-                    Product Details
-                </Typography>
-                <Stack
-                    direction='row'
-                    spacing={3}
-                    sx={{mb: 2}}
-                >
-                    <ImageViewer {...imageViewerProps}/>
-                    <Box sx={{flex: 1}}>
-                        <Stack direction='row' spacing={2} sx={{alignItems: 'center'}}>
-                            <Typography variant="h4" noWrap>
-                                {name}
-                            </Typography>
-                            <Label
-                                variant="filled"
-                                color={(label === 'sale' && 'error') || 'info'}
-                                sx={{
-                                    textTransform: 'uppercase',
-                                }}
-                            >
-                                {label}
-                            </Label>
-                        </Stack>
-                        <Divider sx={{mb: 3}}/>
-                        <Box>
-                            <Typography>
-                                List price:&nbsp;
-                                <Typography
-                                    component="span"
-                                    variant="body1"
-                                    sx={{
-                                        color: 'text.disabled',
-                                        textDecoration: 'line-through',
-                                    }}
-                                >
-                                    {discount && fCurrency(discount)}
-                                </Typography>
-                            </Typography>
-                            <Typography>
-                                Top deal:&nbsp;
-                                <Typography variant="h5" component='span' sx={{color: 'primary.main'}}>
-                                    &nbsp;
-                                    {fCurrency(price)}
-                                </Typography>
-                            </Typography>
-                            <Typography>
-                                You save:&nbsp;
-                                <Typography component='span' sx={{color: 'primary.main'}}>
-                                    &nbsp;
-                                    {fCurrency(price - discount)}
-                                    &nbsp;
-                                    ({((price - discount) / price * 100).toFixed(2)}%)
-                                </Typography>
-                            </Typography>
-                        </Box>
-                        <Stack
-                            sx={{mt: 4}}
-                            spacing={4}
-                            direction='row'
-                        >
-                            <Stack direction='row'>
-                                <Typography
-                                    component='span'
-                                    sx={{lineHeight: '32px'}}
-                                >
-                                    Quantity:&nbsp;
-                                </Typography>
-                                <Button
-                                    variant={currentQuantity !== 1 && 'text' || 'disabled'}
-                                    size='small'
-                                    sx={{
-                                        height: '32px',
-                                        width: '32px',
-                                        minWidth: '32px',
-                                    }}
-                                    onClick={() => handleChangeQuantity(-1)}
-                                >-</Button>
-                                <Input
-                                    value={currentQuantity}
-                                    sx={{
-                                        width: '50px',
-                                        height: '32px',
-                                        '& .MuiInputBase-input': {
-                                            textAlign: 'center',
-                                        }
-                                    }}
-                                />
-                                <Button
-                                    variant={currentQuantity !== quantity && 'text' || 'disabled'}
-                                    size='small'
-                                    sx={{
-                                        height: '32px',
-                                        width: '32px',
-                                        minWidth: '32px',
-                                    }}
-                                    onClick={() => handleChangeQuantity(1)}
-                                >+</Button>
-                            </Stack>
-
-                            <Button
-                                variant={
-                                    'outlined'
-                                }
-                                sx={{
-                                    width: '175.8px',
-                                    height: '46px',
-                                    mt: 1
-                                }}
-                            >
-                                <Icon
-                                    sx={{
-                                        width: '20px',
-                                        height: '20px',
-                                        marginRight: '10px'
-                                    }}
-                                >
-                                    ic_cart
-                                </Icon>
-                                Add to cart
-                            </Button>
-                        </Stack>
-                    </Box>
-                </Stack>
-                <Box>
-                    <div>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Expedita, facere id laborum
-                        laudantium libero magnam minima neque nulla omnis praesentium quae quas quis rerum, sapiente
-                        similique soluta, voluptates. Sit, unde!
-                    </div>
-                    <div>Asperiores harum hic id, laborum nam non sit. Aperiam, odit tenetur. A alias asperiores culpa
-                        dolore doloribus eaque eos hic iusto magnam maxime, nesciunt odio pariatur, placeat ullam
-                        veniam. Ut.
-                    </div>
-                    <div>Aliquid atque, consequatur debitis laborum nam non, omnis pariatur praesentium recusandae totam
-                        ullam velit. Blanditiis ipsam molestias numquam vero voluptatem? Cumque dolor dolores ipsa.
-                        Asperiores consequuntur earum facere hic reprehenderit!
-                    </div>
-                    <div>Aliquid commodi, dignissimos excepturi magni nam nulla. Dicta dolores doloribus labore magnam
-                        quas quisquam sapiente sint totam ut vero? Culpa cumque molestiae porro quod voluptas!
-                        Doloremque illo odio quas vel!
-                    </div>
-                    <div>Ab amet architecto asperiores aut autem culpa distinctio doloremque doloribus excepturi fugiat
-                        iusto libero magni, maiores molestiae mollitia necessitatibus numquam pariatur quaerat qui
-                        quibusdam reiciendis sapiente sint sunt tempora veritatis.
-                    </div>
-                    <div>Ab adipisci quod repudiandae voluptatibus. Aliquid consequuntur corporis dignissimos, dolore
-                        doloribus facilis fuga fugiat libero mollitia nisi perferendis quasi quibusdam quo recusandae
-                        reiciendis sed sunt temporibus ut velit voluptate! Itaque?
-                    </div>
-                    <div>Accusamus architecto cum cupiditate deserunt dicta doloremque eaque facere incidunt, itaque
-                        iusto libero maxime obcaecati quas recusandae rem similique vero? Cumque et itaque magni natus
-                        obcaecati quaerat saepe sint unde.
-                    </div>
-                    <div>A commodi consequuntur cum cumque, cupiditate deserunt dolorem dolores ducimus eius esse
-                        explicabo id impedit laudantium libero maiores maxime mollitia natus nemo nulla omnis quibusdam
-                        recusandae sed sint ullam vel!
-                    </div>
-                    <div>Alias corporis eos error iure mollitia optio quas quo repudiandae sapiente ullam? Atque odio
-                        quasi quod vitae! Eaque eligendi, maxime praesentium quos sed unde? Aliquam deleniti ipsum quasi
-                        repudiandae. Quo!
-                    </div>
-                    <div>Aliquid animi architecto blanditiis corporis eaque earum eius et fuga illo illum laboriosam
-                        nemo nihil nostrum optio quae, qui quibusdam reprehenderit ut veritatis voluptates? Amet est
-                        harum laborum quaerat voluptates.
-                    </div>
-                    <div>Ad amet architecto at autem consectetur culpa cumque distinctio dolor ex hic minus nihil odio
-                        possimus praesentium quaerat, quas quia reprehenderit saepe sunt velit. Esse natus neque porro
-                        quas tempore.
-                    </div>
-                    <div>Corporis culpa deserunt eos necessitatibus odit. A architecto consequatur debitis, deleniti
-                        dignissimos dolor doloremque fugiat incidunt modi perferendis perspiciatis quod repellat
-                        similique sunt unde ut velit veniam veritatis! Ab, ducimus.
-                    </div>
-                    <div>Ad, atque corporis debitis doloribus eligendi harum illo labore laboriosam odio possimus
-                        provident, quam repudiandae voluptatum? Ab ad aut dignissimos doloremque facere, fugit
-                        laboriosam modi neque quia, rem rerum suscipit?
-                    </div>
-                    <div>Esse nemo optio quaerat sunt? Accusantium aliquid et facere itaque iure laborum magni modi
-                        nemo, numquam odio officiis quasi quisquam, quod reiciendis unde? At dolore excepturi facere
-                        quas recusandae veniam.
-                    </div>
-                    <div>A cumque cupiditate deserunt impedit sequi voluptas? Alias assumenda consequatur consequuntur
-                        cumque dolor dolores doloribus ducimus est hic illum ipsum itaque laboriosam magni, nostrum
-                        obcaecati omnis sed. Ducimus laboriosam, nobis.
-                    </div>
-                    <div>Aperiam aspernatur, consectetur consequuntur doloremque dolores eveniet excepturi
-                        exercitationem fugiat harum libero molestias nemo nisi officia optio ratione sapiente sit sunt
-                        velit! Accusamus ad doloribus iusto pariatur vitae voluptatem. Unde?
-                    </div>
-                    <div>Commodi consequuntur cupiditate debitis, eos expedita placeat quae quam reprehenderit sint sit!
-                        Accusamus blanditiis corporis cumque debitis dolor doloremque dolorum earum expedita fugit
-                        laborum, minus quasi qui reiciendis ullam voluptatum?
-                    </div>
-                    <div>Accusantium aut consectetur consequatur delectus dolore esse fuga harum id iste laborum magnam
-                        nostrum officia, pariatur porro possimus rem rerum unde veniam, vero, voluptate. Ex laborum
-                        officiis provident sequi soluta?
-                    </div>
-                    <div>Dolore facilis ipsam magnam placeat, quam quidem sed? Aperiam cum cupiditate dignissimos est
-                        non sequi? Alias aliquid amet aperiam asperiores at dignissimos eaque et, laboriosam obcaecati
-                        odit, saepe suscipit veritatis.
-                    </div>
-                    <div>Ducimus ipsa quo soluta! Accusamus, alias dignissimos, doloribus eligendi error est
-                        exercitationem hic, id in iure libero magnam nihil nostrum placeat quam quo voluptas. Atque
-                        eaque earum repudiandae tenetur unde!
-                    </div>
-                </Box>
-            </Container>
-        </>
-    );
+        <Button
+            variant={
+                'outlined'
+            }
+            sx={{
+                width: '175.8px',
+                height: '46px',
+                '&.MuiButtonBase-root': {
+                    marginInline: largeScreen ? 'none' : 'auto'
+                }
+            }}
+        >
+            <Icon
+                sx={{
+                    width: '20px',
+                    height: '20px',
+                    marginRight: '10px'
+                }}
+            >
+                ic_cart
+            </Icon>
+            Add to cart
+        </Button>
+    </Stack>
 }
 
 ProductDetails.defaultProps = {
@@ -385,42 +417,37 @@ ProductDetails.defaultProps = {
             name: 'sale',
             color: 'error'
         },
+        description: 'The Air Force 1 NDSTRKT blends unbelievable comfort with head-turning style and street-ready toughness to create an \'indestructible\' feel. In a nod to traditional work boots, the timeless silhouette comes covered in rubber reinforcements in high-wear areas. Lace up for tough conditions with this hardy take on a lifestyle classic.\nIntroduced in 1982, the Air Force 1 redefined basketball footwear from the hardwood to the tarmac. It was the first basketball sneaker to house Nike Air, but its innovative nature has since taken a back seat to its status as a street icon. ',
         variations: [
             {
-                variation: {
-                    name: 'Size',
-                    variationOptions: [
-                        {
-                            name: 'Small',
-                            charge: 15
-                        },
-                        {
-                            name: 'Medium',
-                            charge: 0
-                        },
-                        {
-                            name: 'Large',
-                            charge: 30
-                        }
-                    ]
-                },
-                quantity: 10
+                name: 'Size',
+                variationOptions: [
+                    {
+                        name: 'Small',
+                        charge: 15
+                    },
+                    {
+                        name: 'Medium',
+                        charge: 0
+                    },
+                    {
+                        name: 'Large',
+                        charge: 30
+                    }
+                ]
             },
             {
-                variation: {
-                    name: 'Color',
-                    variationOptions: [
-                        {
-                            name: 'White',
-                            charge: 10
-                        },
-                        {
-                            name: 'Black',
-                            charge: 50
-                        }
-                    ]
-                },
-                quantity: 10
+                name: 'Color',
+                variationOptions: [
+                    {
+                        name: 'White',
+                        charge: 10
+                    },
+                    {
+                        name: 'Black',
+                        charge: 50
+                    }
+                ]
             },
         ]
     }
