@@ -1,21 +1,25 @@
 import PropTypes from 'prop-types';
 // @mui
-import { Box, Card, Link, Typography, Stack } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import {Box, Card, Link, Stack, Typography} from '@mui/material';
+import {styled} from '@mui/material/styles';
 // utils
-import { fCurrency } from '../../../utils/formatNumber';
+import {fCurrency} from '../../../utils/formatNumber';
 // components
 import Label from '../../../components/label';
-import { ColorPreview } from '../../../components/color-utils';
+import {ColorPreview} from '../../../components/color-utils';
 
 // ----------------------------------------------------------------------
 
 const StyledProductImg = styled('img')({
-  top: 0,
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  position: 'absolute',
+    top: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    position: 'absolute',
+    transition: '0.3s all ease-in-out',
+    '&:hover': {
+        transform: 'scale(1.25)'
+    }
 });
 
 // ----------------------------------------------------------------------
@@ -29,17 +33,17 @@ export default function ShopProductCard({ product }) {
 
   return (
     <Card>
-      <Box sx={{ pt: '100%', position: 'relative' }}>
-        {status && (
-          <Label
-            variant="filled"
-            color={(status === 'sale' && 'error') || 'info'}
-            sx={{
-              zIndex: 9,
-              top: 16,
-              right: 16,
-              position: 'absolute',
-              textTransform: 'uppercase',
+        <Box sx={{pt: '100%', position: 'relative', overflow: 'hidden'}}>
+            {status && (
+                <Label
+                    variant="filled"
+                    color={(status === 'sale' && 'error') || 'info'}
+                    sx={{
+                        zIndex: 9,
+                        top: 16,
+                        right: 16,
+                        position: 'absolute',
+                        textTransform: 'uppercase',
             }}
           >
             {status}

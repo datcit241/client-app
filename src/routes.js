@@ -1,4 +1,4 @@
-import { Navigate, useRoutes } from 'react-router-dom';
+import {Navigate, useRoutes} from 'react-router-dom';
 // layouts
 import DashboardLayout from './layouts/dashboard';
 import SimpleLayout from './layouts/simple';
@@ -9,21 +9,25 @@ import LoginPage from './pages/LoginPage';
 import Page404 from './pages/Page404';
 import ProductsPage from './pages/ProductsPage';
 import DashboardAppPage from './pages/DashboardAppPage';
+import Loader from "./pages/Loader";
+import ProductDetails from "./pages/ProductDetails";
 
 // ----------------------------------------------------------------------
 
 export default function Router() {
-  const routes = useRoutes([
-    {
-      path: '/dashboard',
-      element: <DashboardLayout />,
-      children: [
-        { element: <Navigate to="/dashboard/app" />, index: true },
-        { path: 'app', element: <DashboardAppPage /> },
-        { path: 'user', element: <UserPage /> },
-        { path: 'products', element: <ProductsPage /> },
-        { path: 'blog', element: <BlogPage /> },
-      ],
+    const routes = useRoutes([
+        {
+            path: '/dashboard',
+            element: <DashboardLayout/>,
+            children: [
+                {element: <Navigate to="/dashboard/app"/>, index: true},
+                {path: 'app', element: <DashboardAppPage/>},
+                {path: 'user', element: <UserPage/>},
+                {path: 'products', element: <ProductsPage/>},
+                {path: 'product-details', element: <ProductDetails/>},
+                {path: 'blog', element: <BlogPage/>},
+                {path: 'loader', element: <Loader/>},
+            ],
     },
     {
       path: 'login',

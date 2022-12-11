@@ -1,9 +1,9 @@
-import { Helmet } from 'react-helmet-async';
-import { useState } from 'react';
+import {Helmet} from 'react-helmet-async';
+import {useState} from 'react';
 // @mui
-import { Container, Stack, Typography } from '@mui/material';
+import {Container, Stack, Typography} from '@mui/material';
 // components
-import { ProductSort, ProductList, ProductCartWidget, ProductFilterSidebar } from '../sections/@dashboard/products';
+import {ProductCartWidget, ProductFilterSidebar, ProductList, ProductSort} from '../sections/@dashboard/products';
 // mock
 import PRODUCTS from '../_mock/products';
 
