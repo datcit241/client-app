@@ -7,10 +7,11 @@ import {
     Divider,
     IconButton,
     Input,
+    Rating,
     Stack,
-    ToggleButtonGroup,
     ToggleButton,
-    Typography, Grid, Rating
+    ToggleButtonGroup,
+    Typography
 } from '@mui/material';
 import {useEffect, useState} from "react";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -150,16 +151,17 @@ export default function ProductDetails(props) {
                     spacing={3}
                     sx={{mb: 5}}
                 >
-                    <ImageViewer {...imageViewerProps}/>
+                    {images.length > 0 && <ImageViewer {...imageViewerProps}/>}
                     <Box sx={{flex: 1}}>
                         <ProductName {...{label, name}}/>
                         <Stack
                             direction='row'
                             sx={{alignItems: 'center'}}
                         >
-                            <Rating name="read-only" value={3.75} readOnly />
-                            &nbsp;
-                            <Typography>(1,273)</Typography>
+                            <Rating name="read-only" value={3.75} readOnly/>
+                            <Typography
+                                sx={{color: 'text.disabled'}}
+                            >&nbsp;1,273 ratings</Typography>
                         </Stack>
                         <Divider sx={{mb: 3}}/>
                         <Stack spacing={3}>
@@ -227,6 +229,50 @@ function ImageViewer(props) {
         setImgState({...imgState, backgroundPosition: `${x}% ${y}%`})
     }
 
+    const ImageRoll = (props) => {
+        return <Stack
+            direction='row'
+            sx={{
+                width: '100%',
+                justifyContent: 'center',
+                position: 'relative'
+            }}
+        >
+            {imageRoll.map(({img, id}) => <Box
+                    key={id}
+                    sx={{
+                        width: '20%',
+                        margin: '5px',
+                        border: id === currentImage ? '2px solid' : 'none',
+                        borderColor: 'primary.main'
+                    }}
+                    component='img' src={img}
+                    onClick={() => setCurrentImage(id)}
+                />
+            )}
+
+            {images.length > MAX_DISPLAY_IMAGES && <ChevronButton
+                sx={{left: '10px'}}
+                onClick={() => changeImageRoll(-1)}
+            >
+                <ChevronLeftIcon
+                    sx={{color: 'white'}}
+                />
+            </ChevronButton>}
+            {images.length > MAX_DISPLAY_IMAGES && <ChevronButton
+                sx={{right: '10px'}}
+                onClick={() => changeImageRoll(1)}
+            >
+                <ChevronLeftIcon
+                    sx={{
+                        transform: 'rotate(180deg)',
+                        color: 'white'
+                    }}
+                />
+            </ChevronButton>}
+        </Stack>
+    }
+
     return <>
         <Stack
             direction="column"
@@ -252,46 +298,7 @@ function ImageViewer(props) {
                     />
                 </Box>
             </Box>
-            <Stack
-                direction='row'
-                sx={{
-                    width: '100%',
-                    justifyContent: 'center',
-                    position: 'relative'
-                }}
-            >
-                {imageRoll.map(({img, id}) => <Box
-                        key={id}
-                        sx={{
-                            width: '20%',
-                            margin: '5px',
-                            border: id === currentImage ? '2px solid' : 'none',
-                            borderColor: 'primary.main'
-                        }}
-                        component='img' src={img}
-                        onClick={() => setCurrentImage(id)}
-                    />
-                )}
-                <ChevronButton
-                    sx={{left: '10px'}}
-                    onClick={() => changeImageRoll(-1)}
-                >
-                    <ChevronLeftIcon
-                        sx={{color: 'white'}}
-                    />
-                </ChevronButton>
-                <ChevronButton
-                    sx={{right: '10px'}}
-                    onClick={() => changeImageRoll(1)}
-                >
-                    <ChevronLeftIcon
-                        sx={{
-                            transform: 'rotate(180deg)',
-                            color: 'white'
-                        }}
-                    />
-                </ChevronButton>
-            </Stack>
+            {images.length > 1 && <ImageRoll/>}
         </Stack>
     </>
 }
@@ -300,7 +307,7 @@ function ProductName(props) {
     const {name, label, ...rootProps} = props;
 
     return <Stack {...rootProps} direction='row' spacing={2} sx={{alignItems: 'center'}}>
-        <Typography variant="h4" noWrap>
+        <Typography variant="h4">
             {name}
         </Typography>
         <Label
