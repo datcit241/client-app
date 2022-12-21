@@ -4,14 +4,14 @@ import DashboardLayout from './layouts/dashboard';
 import SimpleLayout from './layouts/simple';
 //
 import BlogPage from './pages/BlogPage';
-import UserPage from './pages/UserPage';
+import UserPage from './pages/management/UserPage';
 import LoginPage from './pages/LoginPage';
-import Page404 from './pages/Page404';
 import ProductsPage from './pages/ProductsPage';
 import DashboardAppPage from './pages/DashboardAppPage';
 import ProductDetails from "./pages/ProductDetails";
-import Loader from "./components/loader/Loader";
-import ProductManager from "./pages/ProductManager";
+import ProductPage from "./pages/management/ProductPage";
+import RegisterPage from "./pages/RegisterPage";
+import ErrorPage from "./pages/errorPages/ErrorPage";
 
 // ----------------------------------------------------------------------
 
@@ -23,31 +23,36 @@ export default function Router() {
             children: [
                 {element: <Navigate to="/dashboard/app"/>, index: true},
                 {path: 'app', element: <DashboardAppPage/>},
-                {path: 'user', element: <UserPage/>},
+                {path: 'management/user', element: <UserPage/>},
+                {path: 'management/product', element: <ProductPage/>},
                 {path: 'products', element: <ProductsPage/>},
-                {path: 'product-details', element: <ProductDetails/>},
+                {path: 'product-details/*', element: <ProductDetails/>},
                 {path: 'blog', element: <BlogPage/>},
-                {path: 'loader', element: <Loader/>},
-                {path: 'product-manager', element: <ProductManager/>},
             ],
-    },
-    {
-      path: 'login',
-      element: <LoginPage />,
-    },
-    {
-      element: <SimpleLayout />,
-      children: [
-        { element: <Navigate to="/dashboard/app" />, index: true },
-        { path: '404', element: <Page404 /> },
-        { path: '*', element: <Navigate to="/404" /> },
-      ],
-    },
-    {
-      path: '*',
-      element: <Navigate to="/404" replace />,
-    },
-  ]);
+        },
+        {
+            path: 'login',
+            element: <LoginPage/>,
+        },
+        {
+            path: 'register',
+            element: <RegisterPage/>,
+        },
+        {
+            element: <SimpleLayout/>,
+            children: [
+                {element: <Navigate to="/dashboard/app"/>, index: true},
+                // {path: '404', element: <Page404/>},
+                // { path: '401', element: <Page401/> },
+                {path: 'error/:id', element: <ErrorPage/>},
+                {path: '*', element: <Navigate to="/error/404"/>},
+            ],
+        },
+        {
+            path: '*',
+            element: <Navigate to="/error/404"/>,
+        },
+    ]);
 
-  return routes;
+    return routes;
 }

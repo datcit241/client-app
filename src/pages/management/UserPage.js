@@ -1,9 +1,10 @@
-import {useQuery} from "react-query";
 import {Helmet} from 'react-helmet-async';
 import {filter} from 'lodash';
+import {sentenceCase} from 'change-case';
 import {useState} from 'react';
 // @mui
 import {
+    Avatar,
     Button,
     Card,
     Checkbox,
@@ -22,24 +23,23 @@ import {
     Typography,
 } from '@mui/material';
 // components
-import Label from '../components/label';
-import Iconify from '../components/iconify';
-import Scrollbar from '../components/scrollbar';
+import Label from '../../components/label';
+import Iconify from '../../components/iconify';
+import Scrollbar from '../../components/scrollbar';
 // sections
-import {UserListHead, UserListToolbar} from '../sections/@dashboard/user';
+import {UserListHead, UserListToolbar} from '../../sections/@dashboard/user';
 // mock
-import Loader from "../components/loader/Loader";
+import USERLIST from '../../_mock/user';
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
     {id: 'name', label: 'Name', alignRight: false},
-    {id: 'description', label: 'Description', alignRight: false},
-    {id: 'quantity', label: 'Quantity', alignRight: false},
-    {id: 'price', label: 'Price', alignRight: false},
+    {id: 'company', label: 'Company', alignRight: false},
+    {id: 'role', label: 'Role', alignRight: false},
+    {id: 'isVerified', label: 'Verified', alignRight: false},
     {id: 'status', label: 'Status', alignRight: false},
-    {id: 'label', label: 'Label', alignRight: false},
-    {id: '', alignRight: true},
+    {id: ''},
 ];
 
 // ----------------------------------------------------------------------
@@ -73,35 +73,7 @@ function applySortFilter(array, comparator, query) {
     return stabilizedThis.map((el) => el[0]);
 }
 
-export default function ProductManager() {
-    const {isLoading, error, data} = useQuery("products", () =>
-        fetch("https://localhost:7275/api/Products").then(res => {
-            return res.json()
-        })
-    )
-
-
-    return (
-        <>
-            {
-                isLoading
-                    ? <Loader/>
-                    : <Content data={data}/>
-            }
-        </>
-    )
-}
-
-function Content(props) {
-    const {data} = props
-    data.forEach(obj => console.log(obj.prices))
-    const mapper = (obj) => {
-        obj.price = obj.prices.reduce((price, prev) => price.dateSet > prev.dateSet ? price : prev).amount;
-        return obj;
-    }
-    data.map(mapper)
-    console.log(data)
-
+export default function UserPage() {
     const [open, setOpen] = useState(null);
 
     const [page, setPage] = useState(0);
@@ -132,7 +104,7 @@ function Content(props) {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelecteds = data.map((n) => n.name);
+            const newSelecteds = USERLIST.map((n) => n.name);
             setSelected(newSelecteds);
             return;
         }
@@ -168,9 +140,9 @@ function Content(props) {
         setFilterName(event.target.value);
     };
 
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
+    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
 
-    const filteredUsers = applySortFilter(data, getComparator(order, orderBy), filterName);
+    const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
 
     const isNotFound = !filteredUsers.length && !!filterName;
 
@@ -201,14 +173,14 @@ function Content(props) {
                                     order={order}
                                     orderBy={orderBy}
                                     headLabel={TABLE_HEAD}
-                                    rowCount={data.length}
+                                    rowCount={USERLIST.length}
                                     numSelected={selected.length}
                                     onRequestSort={handleRequestSort}
                                     onSelectAllClick={handleSelectAllClick}
                                 />
                                 <TableBody>
                                     {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                        const {id, name} = row;
+                                        const {id, name, role, status, company, avatarUrl, isVerified} = row;
                                         const selectedUser = selected.indexOf(name) !== -1;
 
                                         return (
@@ -218,18 +190,32 @@ function Content(props) {
                                                     <Checkbox checked={selectedUser}
                                                               onChange={(event) => handleClick(event, name)}/>
                                                 </TableCell>
-                                                {TABLE_HEAD.map((header, index) => {
-                                                    const value = row[header.id];
-                                                    const alignRight = row[header.alignRight];
 
-                                                    return <TableCell key={index} align={alignRight ? 'right' : 'left'}>
-                                                        {value || <IconButton size="large" color="inherit"
-                                                                              onClick={handleOpenMenu}>
-                                                            <Iconify icon={'eva:more-vertical-fill'}/>
-                                                        </IconButton>
-                                                        }
-                                                    </TableCell>
-                                                })}
+                                                <TableCell component="th" scope="row" padding="none">
+                                                    <Stack direction="row" alignItems="center" spacing={2}>
+                                                        <Avatar alt={name} src={avatarUrl}/>
+                                                        <Typography variant="subtitle2" noWrap>
+                                                            {name}
+                                                        </Typography>
+                                                    </Stack>
+                                                </TableCell>
+
+                                                <TableCell align="left">{company}</TableCell>
+
+                                                <TableCell align="left">{role}</TableCell>
+
+                                                <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell>
+
+                                                <TableCell align="left">
+                                                    <Label
+                                                        color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label>
+                                                </TableCell>
+
+                                                <TableCell align="right">
+                                                    <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
+                                                        <Iconify icon={'eva:more-vertical-fill'}/>
+                                                    </IconButton>
+                                                </TableCell>
                                             </TableRow>
                                         );
                                     })}
@@ -270,7 +256,7 @@ function Content(props) {
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component="div"
-                        count={data.length}
+                        count={USERLIST.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}

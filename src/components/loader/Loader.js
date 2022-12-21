@@ -6,21 +6,21 @@ const LoaderItem = styled('div')(({theme}) => ({
     width: '100%',
     height: '100%',
     borderRadius: '50%',
-    '&:nth-child(1)': {
+    '&:nth-of-type(1)': {
         // borderBottom: '6px solid #f13a8f',
         borderBottom: '6px solid #ff1bd1',
         borderBottomColor: theme.palette.primary.lighter,
         transform: 'rotateX(35deg) rotateY(-45deg)',
         animation: 'rotate-one 1s linear infinite'
     },
-    '&:nth-child(2)': {
+    '&:nth-of-type(2)': {
         // borderRight: '6px solid #4bc8eb',
         borderRight: '6px solid #20e3b2',
         borderRightColor: theme.palette.primary.light,
         transform: 'rotateX(50deg) rotateY(10deg)',
         animation: 'rotate-two 1s linear infinite'
     },
-    '&:nth-child(3)': {
+    '&:nth-of-type(3)': {
         borderRight: '6px solid #36f372',
         borderRightColor: theme.palette.primary.main,
         transform: 'rotateX(35deg) rotateY(55deg)',
@@ -53,6 +53,7 @@ function Loader() {
                 component='div'
                 sx={{
                     position: 'absolute',
+                    background: 'transparent',
                     left: '50%',
                     top: '50%',
                     transform: 'translate(-50%, -50%)',

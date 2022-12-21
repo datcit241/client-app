@@ -1,6 +1,8 @@
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
+import {unstable_HistoryRouter as HistoryRouter} from 'react-router-dom';
+// import {Router} from 'react-router-dom';
+import {HelmetProvider} from 'react-helmet-async';
+import {createBrowserHistory} from "history";
 
 //
 import App from './App';
@@ -10,12 +12,13 @@ import reportWebVitals from './reportWebVitals';
 // ----------------------------------------------------------------------
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+export const history = createBrowserHistory();
 
 root.render(
   <HelmetProvider>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+      <HistoryRouter history={history}>
+          <App/>
+      </HistoryRouter>
   </HelmetProvider>
 );
 

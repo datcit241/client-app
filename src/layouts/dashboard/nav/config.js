@@ -3,45 +3,59 @@ import SvgColor from '../../../components/svg-color';
 
 // ----------------------------------------------------------------------
 
-const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />;
+const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{width: 1, height: 1}}/>;
 
 const navConfig = [
-  {
-    title: 'dashboard',
-    path: '/dashboard/app',
-    icon: icon('ic_analytics'),
-  },
-  {
-      title: 'user',
-      path: '/dashboard/user',
-      icon: icon('ic_user'),
-  },
     {
+        type: 'individual',
+        title: 'dashboard',
+        path: '/dashboard/app',
+        icon: icon('ic_analytics'),
+    },
+    {
+        type: 'group',
+        requireLogin: true,
+        title: 'management',
+        icon: icon('ic_user'),
+        children: [
+            {
+                title: 'user',
+                path: '/dashboard/management/user',
+                icon: icon('ic_user'),
+            },
+            {
+                title: 'product',
+                path: '/dashboard/management/product',
+                icon: icon('ic_user'),
+            },
+        ]
+    },
+    {
+        type: 'individual',
         title: 'products',
         path: '/dashboard/products',
         icon: icon('ic_cart'),
     },
     {
+        type: 'individual',
         title: 'product details',
         path: '/dashboard/product-details',
         icon: icon('ic_cart'),
     },
     {
+        type: 'individual',
         title: 'blog',
         path: '/dashboard/blog',
         icon: icon('ic_blog'),
     },
     {
+        type: 'individual',
         title: 'login',
         path: '/login',
         icon: icon('ic_lock'),
     },
     {
-        title: 'loader',
-        path: '/dashboard/loader',
-        icon: icon('ic_lock'),
-    },
-    {
+        type: 'individual',
         title: 'Not found',
         path: '/404',
         icon: icon('ic_disabled'),
