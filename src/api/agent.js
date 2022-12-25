@@ -12,7 +12,7 @@ axios.interceptors.request.use(response => {
 axios.interceptors.response.use(response => {
         const pagination = response.headers.pagination;
         if (pagination) {
-            response.data = {data: response.data, pagination: JSON.parse(pagination)}
+            response = {data: response.data, pagination: JSON.parse(pagination)}
             return response;
         }
 
@@ -53,13 +53,16 @@ const responseBody = (response) => response.data;
 
 const requests = {
     get: async (url) => axios.get(url).then(responseBody),
+    getPagination: async (url, params) => axios.get(url, {params}),
     post: async (url, body) => axios.post(url, body).then(responseBody),
     put: async (url, body) => axios.put(url, body).then(responseBody),
-    del: async (url) => axios.delete(url).then(responseBody)
+    del: async (url) => axios.delete(url).then(responseBody),
 }
 
 const Products = {
-    list: () => requests.get('products')
+    list: (params) => requests.getPagination('products', params),
+    del: (id) => requests.del(`products/${id}`),
+    get: (id) => requests.get(`products/${id}`),
 }
 
 const Account = {

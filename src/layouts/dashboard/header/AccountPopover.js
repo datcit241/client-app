@@ -6,8 +6,8 @@ import {Avatar, Box, Divider, IconButton, MenuItem, Popover, Stack, Typography} 
 
 import {NavLink} from "react-router-dom";
 import {logOut} from "../../../features/userSlice"
+import account from "../../../_mock/account";
 // mocks_
-import account from '../../../_mock/account';
 
 // ----------------------------------------------------------------------
 
@@ -65,7 +65,8 @@ export default function AccountPopover() {
                     }),
                 }}
             >
-                <Avatar src={user ? account.photoURL : null} alt="photoURL"/>
+                {/* <Avatar src={user ? account.photoURL : null} alt="photoURL"/> */}
+                <Avatar src={user ? (user.avatar || account.photoURL) : null} alt="photoURL"/>
             </IconButton>
 
             <Popover

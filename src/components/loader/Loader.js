@@ -52,15 +52,16 @@ function Loader() {
             <Box
                 component='div'
                 sx={{
-                    position: 'absolute',
-                    background: 'transparent',
+                    position: 'fixed',
+                    // background: 'transparent',
                     left: '50%',
                     top: '50%',
                     transform: 'translate(-50%, -50%)',
                     width: '100px',
                     height: '100px',
                     borderRadius: '50%',
-                    perspective: '800px'
+                    perspective: '800px',
+                    zIndex: '1000'
                 }}
             >
                 <LoaderItem/>

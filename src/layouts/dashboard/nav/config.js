@@ -16,7 +16,7 @@ const navConfig = [
         type: 'group',
         requireLogin: true,
         title: 'management',
-        icon: icon('ic_user'),
+        icon: icon('ic_lock'),
         children: [
             {
                 title: 'user',
@@ -26,7 +26,7 @@ const navConfig = [
             {
                 title: 'product',
                 path: '/dashboard/management/product',
-                icon: icon('ic_user'),
+                icon: icon('ic_cart'),
             },
         ]
     },

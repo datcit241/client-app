@@ -3,6 +3,7 @@ import {filter} from 'lodash';
 import {useEffect, useState} from 'react';
 // @mui
 import {
+    Avatar,
     Button,
     Card,
     Checkbox,
@@ -22,20 +23,24 @@ import {
 } from '@mui/material';
 
 import {useDispatch, useSelector} from "react-redux";
+import {useNavigate} from "react-router-dom";
 // components
 import Iconify from '../../components/iconify';
 import Scrollbar from '../../components/scrollbar';
 // sections
 import {UserListHead, UserListToolbar} from '../../sections/@dashboard/user';
 // mock
+import {delAll, list, setPagingParams} from "../../features/productsSlice";
 import Loader from "../../components/loader/Loader";
-import {list} from "../../features/productsSlice";
+import ActionDialog from "./ActionDialog";
+import initialPagingParams from "../../features/config/initialPagingParams";
+import pagingConfig from "../../features/config/pagingConfig";
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
     {id: 'name', label: 'Name', alignRight: false},
-    {id: 'description', label: 'Description', alignRight: false},
+    {id: 'description', label: 'Description', alignRight: false, noWarp: true},
     {id: 'quantity', label: 'Quantity', alignRight: false},
     {id: 'price', label: 'Price', alignRight: false},
     {id: 'status', label: 'Status', alignRight: false},
@@ -43,24 +48,6 @@ const TABLE_HEAD = [
 ];
 
 // ----------------------------------------------------------------------
-
-function descendingComparator(a, b, orderBy) {
-    if (b[orderBy] < a[orderBy]) {
-        return -1;
-    }
-    if (b[orderBy] > a[orderBy]) {
-        return 1;
-    }
-    return 0;
-}
-
-function getComparator(order, orderBy) {
-    console.log(order, orderBy)
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
 function applySortFilter(array, comparator, query) {
     const stabilizedThis = array.map((el, index) => [el, index]);
     stabilizedThis.sort((a, b) => {
@@ -74,45 +61,51 @@ function applySortFilter(array, comparator, query) {
     return stabilizedThis.map((el) => el[0]);
 }
 
-export default function ProductPage() {
-    // const {isLoading, error, data} = useQuery("products", () =>
-    //     fetch("https://localhost:7275/api/Products").then(res => {
-    //         return res.json()
-    //     })
-    // )
-    const {isLoading, hasError, products} = useSelector(store => store.products);
+export default function ProductPagePagin(props) {
+    const {
+        isLoading,
+        hasError,
+        products: data,
+        pagingParams,
+        pagination: {pageSize: rowsPerPage, currentPage: page, totalCount, totalPages}
+    } = useSelector(store => store.products);
     const {user} = useSelector(store => store.user);
     const dispatch = useDispatch();
+    console.log(data)
+
     useEffect(() => {
-        dispatch(list());
+        dispatch(setPagingParams({pageNumber: 1, pageSize: initialPagingParams.pageSize}));
+    }, []);
+
+    useEffect(() => {
         console.log('fetching')
-    }, [user]);
+        dispatch(list());
+    }, [pagingParams, user]);
 
-    return (
-        <>
-            {
-                isLoading
-                    ? <Loader/>
-                    : <Content data={products}/>
-            }
-        </>
-    )
-}
+    const handleSetPaginParams = (params) => {
+        const newParams = {...pagingParams}
 
-function Content(props) {
-    const {data: rawData} = props
-    const mapper = (obj) => {
-        const newObj = {
-            ...obj,
-            price: obj.prices.reduce((price, prev) => price.dateSet > prev.dateSet ? price : prev).amount
-        };
-        return newObj;
+        if (params.pageNumber) newParams.pageNumber = params.pageNumber;
+        if (params.pageSize) newParams.pageSize = params.pageSize;
+
+        dispatch(setPagingParams(newParams));
     }
-    const data = rawData.map(mapper)
 
     const [open, setOpen] = useState(null);
 
-    const [page, setPage] = useState(0);
+    const [action, setAction] = useState(); // {label, handler}
+    const [currentRow, setCurrentRow] = useState(null);
+
+    const actionHandler = {
+        del: () => {
+            handleDelete([currentRow]);
+            setOpen(false);
+        },
+        delSelected: () => {
+            handleDelete(selected);
+            setSelected([]);
+        }
+    }
 
     const [order, setOrder] = useState('asc');
 
@@ -122,10 +115,9 @@ function Content(props) {
 
     const [filterName, setFilterName] = useState('');
 
-    const [rowsPerPage, setRowsPerPage] = useState(5);
-
-    const handleOpenMenu = (event) => {
+    const handleOpenMenu = (event, id) => {
         setOpen(event.currentTarget);
+        setCurrentRow(id);
     };
 
     const handleCloseMenu = () => {
@@ -140,18 +132,18 @@ function Content(props) {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelecteds = data.map((n) => n.name);
+            const newSelecteds = data.map((n) => n.id);
             setSelected(newSelecteds);
             return;
         }
         setSelected([]);
     };
 
-    const handleClick = (event, name) => {
-        const selectedIndex = selected.indexOf(name);
+    const handleClick = (event, id) => {
+        const selectedIndex = selected.indexOf(id);
         let newSelected = [];
         if (selectedIndex === -1) {
-            newSelected = newSelected.concat(selected, name);
+            newSelected = newSelected.concat(selected, id);
         } else if (selectedIndex === 0) {
             newSelected = newSelected.concat(selected.slice(1));
         } else if (selectedIndex === selected.length - 1) {
@@ -163,24 +155,28 @@ function Content(props) {
     };
 
     const handleChangePage = (event, newPage) => {
-        setPage(newPage);
+        handleSetPaginParams({pageNumber: newPage + 1});
     };
 
     const handleChangeRowsPerPage = (event) => {
-        setPage(0);
-        setRowsPerPage(parseInt(event.target.value, 10));
+        handleSetPaginParams({pageNumber: 1, pageSize: parseInt(event.target.value, 10)})
     };
 
     const handleFilterByName = (event) => {
-        setPage(0);
+        handleSetPaginParams({pageNumber: 1})
         setFilterName(event.target.value);
     };
 
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
+    const navigator = useNavigate();
+    const handleDelete = (products) => {
+        dispatch(delAll(products)).then(() => {
+            dispatch(list());
+        });
+    }
 
-    const filteredUsers = applySortFilter(data, getComparator(order, orderBy), filterName);
+    const emptyRows = isLoading ? rowsPerPage : (page > 0 ? rowsPerPage - data.length : 0);
 
-    const isNotFound = !filteredUsers.length && !!filterName;
+    const isNotFound = !data.length && !!filterName;
 
     return (
         <>
@@ -188,6 +184,14 @@ function Content(props) {
                 <title>Product Management</title>
             </Helmet>
 
+            {isLoading && <Loader/>}
+            <ActionDialog
+                action={action}
+                setAction={setAction}
+                message={action?.label === 'Delete' ? "Are you sure you want to delete?" : null}
+            >
+                <></>
+            </ActionDialog>
             <Container>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4" gutterBottom>
@@ -199,8 +203,12 @@ function Content(props) {
                 </Stack>
 
                 <Card>
-                    <UserListToolbar numSelected={selected.length} filterName={filterName}
-                                     onFilterName={handleFilterByName}/>
+                    <UserListToolbar
+                        numSelected={selected.length}
+                        filterName={filterName}
+                        onFilterName={handleFilterByName}
+                        handleDelete={() => setAction({label: 'Delete', handler: actionHandler.delSelected})}
+                    />
 
                     <Scrollbar>
                         <TableContainer sx={{minWidth: 800}}>
@@ -215,29 +223,39 @@ function Content(props) {
                                     onSelectAllClick={handleSelectAllClick}
                                 />
                                 <TableBody>
-                                    {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                                    {data.map((row) => {
                                         const {id, name} = row;
-                                        const selectedUser = selected.indexOf(name) !== -1;
+                                        const selectedUser = selected.indexOf(id) !== -1;
 
                                         return (
                                             <TableRow hover key={id} tabIndex={-1} role="checkbox"
                                                       selected={selectedUser}>
                                                 <TableCell padding="checkbox">
                                                     <Checkbox checked={selectedUser}
-                                                              onChange={(event) => handleClick(event, name)}/>
+                                                              onChange={(event) => handleClick(event, id)}/>
                                                 </TableCell>
                                                 {TABLE_HEAD.map((header, index) => {
                                                     const value = row[header.id];
                                                     const alignRight = row[header.alignRight];
 
                                                     return <TableCell key={index} align={alignRight ? 'right' : 'left'}>
-                                                        {value ||
-                                                            <IconButton
+                                                        {index === 0
+                                                            ? (
+                                                                <Stack direction="row" alignItems="center" spacing={2}>
+                                                                    {row.img &&
+                                                                        <Avatar alt={name} src={row.img}/>
+                                                                    }
+                                                                    <Typography variant="subtitle2" noWrap>
+                                                                        {value}
+                                                                    </Typography>
+                                                                </Stack>
+                                                            )
+                                                            : (value !== undefined ? value : <IconButton
                                                                 size="large"
                                                                 color="inherit"
-                                                                onClick={handleOpenMenu}>
+                                                                onClick={(e) => handleOpenMenu(e, id)}>
                                                                 <Iconify icon={'eva:more-vertical-fill'}/>
-                                                            </IconButton>
+                                                            </IconButton>)
                                                         }
                                                     </TableCell>
                                                 })}
@@ -279,11 +297,11 @@ function Content(props) {
                     </Scrollbar>
 
                     <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
+                        rowsPerPageOptions={pagingConfig.pageSizes}
                         component="div"
-                        count={data.length}
+                        count={totalCount}
                         rowsPerPage={rowsPerPage}
-                        page={page}
+                        page={page - 1}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                     />
@@ -313,11 +331,14 @@ function Content(props) {
                     Edit
                 </MenuItem>
 
-                <MenuItem sx={{color: 'error.main'}}>
+                <MenuItem
+                    sx={{color: 'error.main'}}
+                    onClick={() => setAction({label: 'Delete', handler: actionHandler.del})}
+                >
                     <Iconify icon={'eva:trash-2-outline'} sx={{mr: 2}}/>
                     Delete
                 </MenuItem>
             </Popover>
         </>
-    );
+    )
 }

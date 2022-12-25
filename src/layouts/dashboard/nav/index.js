@@ -20,7 +20,7 @@ import navConfig from './config';
 
 const NAV_WIDTH = 280;
 
-const StyledAccount = styled('div')(({ theme }) => ({
+const StyledAccount = styled('div')(({theme}) => ({
     display: 'flex',
     alignItems: 'center',
     padding: theme.spacing(2, 2.5),
@@ -35,7 +35,7 @@ Nav.propTypes = {
     onCloseNav: PropTypes.func,
 };
 
-export default function Nav({ openNav, onCloseNav }) {
+export default function Nav({openNav, onCloseNav}) {
     const {pathname} = useLocation();
     const {user} = useSelector(store => store.user);
 
@@ -52,19 +52,19 @@ export default function Nav({ openNav, onCloseNav }) {
         <Scrollbar
             sx={{
                 height: 1,
-                '& .simplebar-content': { height: 1, display: 'flex', flexDirection: 'column' },
+                '& .simplebar-content': {height: 1, display: 'flex', flexDirection: 'column'},
             }}
         >
-            <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
-                <Logo />
+            <Box sx={{px: 2.5, py: 3, display: 'inline-flex'}}>
+                <Logo/>
             </Box>
 
-            <Box sx={{ mb: 5, mx: 2.5 }}>
+            <Box sx={{mb: 5, mx: 2.5}}>
                 <Link underline="none">
                     <StyledAccount>
                         {user
                             ? <>
-                                <Avatar src={account.photoURL} alt="photoURL"/>
+                                <Avatar src={user.avatar} alt="photoURL"/>
 
                                 <Box sx={{ml: 2}}>
                                     <Typography variant="subtitle2" sx={{color: 'text.primary'}}>
@@ -85,9 +85,9 @@ export default function Nav({ openNav, onCloseNav }) {
                 </Link>
             </Box>
 
-            <NavSection data={navConfig} />
+            <NavSection data={navConfig}/>
 
-            <Box sx={{ flexGrow: 1 }} />
+            <Box sx={{flexGrow: 1}}/>
         </Scrollbar>
     );
 
@@ -95,8 +95,8 @@ export default function Nav({ openNav, onCloseNav }) {
         <Box
             component="nav"
             sx={{
-                flexShrink: { lg: 0 },
-                width: { lg: NAV_WIDTH },
+                flexShrink: {lg: 0},
+                width: {lg: NAV_WIDTH},
             }}
         >
             {isDesktop ? (
@@ -121,7 +121,7 @@ export default function Nav({ openNav, onCloseNav }) {
                         keepMounted: true,
                     }}
                     PaperProps={{
-                        sx: { width: NAV_WIDTH },
+                        sx: {width: NAV_WIDTH},
                     }}
                 >
                     {renderContent}

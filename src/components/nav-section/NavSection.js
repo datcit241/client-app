@@ -19,18 +19,7 @@ export default function NavSection({data = [], ...other}) {
     return (
         <Box {...other}>
             <List disablePadding sx={{p: 1}}>
-                {data.map((navItem) => {
-                    const {type, requireLogin, ...item} = navItem
-                    if (requireLogin && !user) return <></>;
-                    return (
-                        <>
-                            {type === 'group'
-                                ? <GroupItem key={navItem.title} item={item}/>
-                                : <NavItem key={navItem.title} item={item}/>
-                            }
-                        </>
-                    )
-                })}
+                {data.map((navItem, index) => <Item key={index} {...{...navItem, user}}/>)}
             </List>
         </Box>
     );
@@ -38,6 +27,18 @@ export default function NavSection({data = [], ...other}) {
 
 // ----------------------------------------------------------------------
 
+function Item(props) {
+    const {user, type, requireLogin, ...item} = props;
+    if (requireLogin && !user) return <></>;
+    return (
+        <>
+            {type === 'group'
+                ? <GroupItem item={item}/>
+                : <NavItem item={item}/>
+            }
+        </>
+    )
+}
 
 function GroupItem({item}) {
     const {children, ...other} = item;

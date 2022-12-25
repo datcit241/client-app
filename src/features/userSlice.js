@@ -24,22 +24,22 @@ const userSlice = createSlice({
             state.user = null;
         }
     },
-    extraReducers: {
-        [login.pending]: (state) => {
+    extraReducers: ({addCase}) => {
+        addCase(login.pending, (state) => {
             state.isLoading = true;
             state.hasError = false;
-        },
-        [login.fulfilled]: (state, action) => {
+        });
+        addCase(login.fulfilled, (state, action) => {
             state.user = action.payload;
             state.isLoading = false;
             state.hasError = false;
             console.log('logged in user', state.user)
-        },
-        [login.rejected]: (state) => {
+        });
+        addCase(login.rejected, (state) => {
             state.isLoading = false;
             state.hasError = true;
             console.log("error")
-        }
+        });
     }
 })
 

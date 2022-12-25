@@ -1,50 +1,83 @@
 import {Helmet} from 'react-helmet-async';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 // @mui
 import {Container, Stack, Typography} from '@mui/material';
+import {useDispatch, useSelector} from "react-redux";
+import InfiniteScroll from "react-infinite-scroller";
 // components
 import {ProductCartWidget, ProductFilterSidebar, ProductList, ProductSort} from '../sections/@dashboard/products';
+
+import {listAccum, resetProducts, setPagingParams} from "../features/productsSlice";
 // mock
-import PRODUCTS from '../_mock/products';
+import Loader from "../components/loader/Loader";
 
 // ----------------------------------------------------------------------
 
 export default function ProductsPage() {
-  const [openFilter, setOpenFilter] = useState(false);
+    const [openFilter, setOpenFilter] = useState(false);
+    const [isLoadingNext, setIsLoadingNext] = useState(false)
 
-  const handleOpenFilter = () => {
-    setOpenFilter(true);
-  };
+    const {products, isLoading, pagination, pagingParams} = useSelector(store => store.products);
+    const dispatch = useDispatch();
 
-  const handleCloseFilter = () => {
-    setOpenFilter(false);
-  };
+    useEffect(() => {
+        setIsLoadingNext(true);
+        dispatch(setPagingParams({pageNumber: 1, pageSize: 8}))
+        dispatch(resetProducts());
+        dispatch(listAccum());
+        setIsLoadingNext(false);
+    }, []);
 
-  return (
-    <>
-      <Helmet>
-        <title> Dashboard: Products | Minimal UI </title>
-      </Helmet>
+    const handleGetNext = () => {
+        setIsLoadingNext(true);
+        dispatch(setPagingParams({pageNumber: pagination.currentPage + 1, pageSize: pagination.pageSize}))
+        dispatch(listAccum());
+        setIsLoadingNext(false);
+    }
 
-      <Container>
-        <Typography variant="h4" sx={{ mb: 5 }}>
-          Products
-        </Typography>
+    const hasMore = !isLoadingNext && !isLoading && !!pagination && pagination.currentPage < pagination.totalPages;
+    const handleOpenFilter = () => {
+        setOpenFilter(true);
+    };
 
-        <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
-            <ProductFilterSidebar
-              openFilter={openFilter}
-              onOpenFilter={handleOpenFilter}
-              onCloseFilter={handleCloseFilter}
-            />
-            <ProductSort />
-          </Stack>
-        </Stack>
+    const handleCloseFilter = () => {
+        setOpenFilter(false);
+    };
 
-        <ProductList products={PRODUCTS} />
-        <ProductCartWidget />
-      </Container>
-    </>
-  );
+    return (
+        <>
+            <Helmet>
+                <title> Dashboard: Products | Minimal UI </title>
+            </Helmet>
+
+            <Container>
+                <Typography variant="h4" sx={{mb: 5}}>
+                    Products
+                </Typography>
+
+                <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end"
+                       sx={{mb: 5}}>
+                    <Stack direction="row" spacing={1} flexShrink={0} sx={{my: 1}}>
+                        <ProductFilterSidebar
+                            openFilter={openFilter}
+                            onOpenFilter={handleOpenFilter}
+                            onCloseFilter={handleCloseFilter}
+                        />
+                        <ProductSort/>
+                    </Stack>
+                </Stack>
+
+                {isLoading && <Loader/>}
+                <InfiniteScroll
+                    pageStart={0}
+                    hasMore={hasMore}
+                    loadMore={handleGetNext}
+                    initialLoad={Boolean(false)}
+                >
+                    <ProductList products={products}/>
+                </InfiniteScroll>
+                <ProductCartWidget/>
+            </Container>
+        </>
+    )
 }

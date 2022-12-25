@@ -17,14 +17,11 @@ import {useEffect, useState} from "react";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import {styled} from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import {useParams} from "react-router-dom";
-import {useDispatch, useSelector} from "react-redux";
-import {get, setCurrentImage, setQuantity, setSelectedVariations, slideImageRoll} from "../features/productsSlice";
+import {isNull} from "lodash";
 import {fCurrency} from "../utils/formatNumber";
 import {Icon} from "../components/icon/Icon";
-import CartWidget from "../sections/@dashboard/products/ProductCartWidget";
 import Label from "../components/label";
-import {labelColorMapper} from "../features/mappers/productMapper";
+import CartWidget from "../sections/@dashboard/products/ProductCartWidget";
 
 const ChevronButton = styled(IconButton)(({theme}) => ({
     width: '40px',
@@ -35,28 +32,15 @@ const ChevronButton = styled(IconButton)(({theme}) => ({
 }))
 
 export default function ProductDetails(props) {
-    const {id} = useParams();
-    const {product, selectedVariations} = useSelector(store => store.products);
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        // if (product?.id !== id) {
-        console.log('fetching product')
-        dispatch(get(id));
-        // }
-    }, []);
-
-    useEffect(() => {
-        console.log(product)
-    }, [product])
-
-    useEffect(() => {
-        console.log(selectedVariations)
-    }, [selectedVariations])
-
-    const {name, label, discount, quantity, description, price, images, variations} = product
-
-    console.log(id)
+    const {product: {name, images, price, discount, quantity, label, description, variations}} = props;
+    const [selectedVariations, setSelectedVariations] = useState(() => {
+        const initial = {};
+        variations.forEach(variation => {
+            // initial[variation.name] = Math.floor(variation.variationOptions.length / 2)
+            initial[variation.name] = null
+        })
+        return initial;
+    })
 
     const largeScreen = useMediaQuery(theme => theme.breakpoints.up('md'));
 
@@ -73,12 +57,12 @@ export default function ProductDetails(props) {
         const [charge, setCharge] = useState(0)
 
         useEffect(() => {
-            const ans = selectedVariations.reduce(
-                (prev, option) => prev + option ? option.charge : 0,
-                0
-            )
-            console.log(ans)
+            let ans = 0;
+            Object.values(selectedVariations).forEach((variation, index) => {
+                ans += isNull(variation) ? 0 : variations[index].variationOptions[variation].charge;
+            })
             setCharge(ans)
+            console.log(charge)
         }, [selectedVariations])
 
         return <Box {...rootProps}>
@@ -99,29 +83,31 @@ export default function ProductDetails(props) {
                 Top deal:&nbsp;
                 <Typography variant="h5" component='span' sx={{color: 'primary.main'}}>
                     &nbsp;
-                    {fCurrency(price - discount + charge)}
+                    {discount && fCurrency(discount + charge)}
                 </Typography>
             </Typography>
             <Typography>
                 You save:&nbsp;
                 <Typography component='span' sx={{color: 'primary.main'}}>
                     &nbsp;
-                    {fCurrency(discount) || '$0'}
+                    {fCurrency(price - discount)}
                     &nbsp;
-                    ({(discount / price * 100).toFixed(2)}%)
+                    ({((price - discount) / price * 100).toFixed(2)}%)
                 </Typography>
             </Typography>
         </Box>
     }
     const Variations = (props) => {
         const {...rootProps} = props;
-        const handleChange = (e, variation, variationOption) => {
-            dispatch(setSelectedVariations({variation, variationOption}));
+        const handleChange = (e, variation, val) => {
+            const clone = {...selectedVariations}
+            clone[variation.name] = val;
+            setSelectedVariations(clone);
         }
 
         return (
             <Stack spacing={1} {...rootProps}>
-                {variations?.map(variation => (
+                {variations.map(variation => (
                     <Box key={variation.name}>
                         <Typography>
                             {variation.name}
@@ -129,13 +115,13 @@ export default function ProductDetails(props) {
                         <ToggleButtonGroup
                             size='small'
                             exclusive
-                            value={selectedVariations?.find(option => variation.variationOptions.includes(option))}
+                            value={selectedVariations[variation.name]}
                             color={'primary'}
-                            onChange={(e, optionId) => handleChange(e, variation, optionId)}
+                            onChange={(e, val) => handleChange(e, variation, val)}
                         >
                             {variation.variationOptions.map((option, index) => (
                                 <ToggleButton
-                                    value={option}
+                                    value={index}
                                     key={index}
                                 >
                                     {option.name}
@@ -158,24 +144,24 @@ export default function ProductDetails(props) {
             <Container>
                 <CartWidget/>
                 <Typography variant="h4" sx={{mb: 5}}>
-                    Details
+                    Product Details
                 </Typography>
                 <Stack
                     direction={largeScreen ? 'row' : 'column-reverse'}
                     spacing={3}
                     sx={{mb: 5}}
                 >
-                    {images?.length > 0 && <ImageViewer {...imageViewerProps}/>}
+                    {images.length > 0 && <ImageViewer {...imageViewerProps}/>}
                     <Box sx={{flex: 1}}>
                         <ProductName {...{label, name}}/>
                         <Stack
                             direction='row'
                             sx={{alignItems: 'center'}}
                         >
-                            <Rating name="read-only" value={product.rating} readOnly/>
+                            <Rating name="read-only" value={3.75} readOnly/>
                             <Typography
                                 sx={{color: 'text.disabled'}}
-                            >&nbsp;{product?.ratings?.length || '0'} ratings</Typography>
+                            >&nbsp;1,273 ratings</Typography>
                         </Stack>
                         <Divider sx={{mb: 3}}/>
                         <Stack spacing={3}>
@@ -185,11 +171,10 @@ export default function ProductDetails(props) {
                         </Stack>
                     </Box>
                 </Stack>
-                {description?.split('\n').map((paragraph, index) => (
+                {description.split('\n').map(paragraph => (
                     <Typography
                         paragraph
                         sx={{textIndent: '20px', textAlign: 'justify'}}
-                        key={index}
                     >{paragraph}</Typography>
                 ))}
             </Container>
@@ -198,17 +183,36 @@ export default function ProductDetails(props) {
 }
 
 function ImageViewer(props) {
-    const {...rootProps} = props;
-    const {product: {images, imageRoll}, currentImage} = useSelector(store => store.products);
+    const {images, ...rootProps} = props;
+    const MAX_DISPLAY_IMAGES = 5;
+    const ACTUAL_DISPLAY_IMAGES = Math.min(MAX_DISPLAY_IMAGES, images.length);
+    const [imageRoll, setImageRoll] = useState(() => {
+        const arr = [];
+        for (let i = 0; i < ACTUAL_DISPLAY_IMAGES; i += 1) {
+            arr.push({
+                img: images[i],
+                id: i
+            })
+        }
+        return arr;
+    })
 
+    const [currentImage, setCurrentImage] = useState(0);
     const [imgState, setImgState] = useState({
         backgroundImage: `url(${images[currentImage]})`,
         backgroundPosition: '0% 0%'
     });
-    const dispatch = useDispatch();
 
     const changeImageRoll = (val) => {
-        dispatch(slideImageRoll(val));
+        const start = imageRoll[0].id + val
+        const end = imageRoll[ACTUAL_DISPLAY_IMAGES - 1].id + val;
+        if (start > -1 && end < images.length) {
+            setImageRoll(prev => prev.map(imageRoll => {
+                imageRoll.id += val;
+                imageRoll.img = images[imageRoll.id];
+                return imageRoll;
+            }))
+        }
     }
 
     useEffect(() => {
@@ -216,7 +220,7 @@ function ImageViewer(props) {
             ...imgState,
             backgroundImage: `url(${images[currentImage]})`,
         })
-    }, [currentImage, images])
+    }, [currentImage])
 
     const handleMouseMove = e => {
         const {left, top, width, height} = e.target.getBoundingClientRect()
@@ -235,19 +239,19 @@ function ImageViewer(props) {
             }}
         >
             {imageRoll.map(({img, id}) => <Box
-                key={id}
-                sx={{
+                    key={id}
+                    sx={{
                         width: '20%',
                         margin: '5px',
                         border: id === currentImage ? '2px solid' : 'none',
                         borderColor: 'primary.main'
                     }}
-                component='img' src={img}
-                onClick={() => dispatch(setCurrentImage(id))}
+                    component='img' src={img}
+                    onClick={() => setCurrentImage(id)}
                 />
             )}
 
-            {images.length > imageRoll.length && <ChevronButton
+            {images.length > MAX_DISPLAY_IMAGES && <ChevronButton
                 sx={{left: '10px'}}
                 onClick={() => changeImageRoll(-1)}
             >
@@ -255,7 +259,7 @@ function ImageViewer(props) {
                     sx={{color: 'white'}}
                 />
             </ChevronButton>}
-            {images.length > imageRoll.length && <ChevronButton
+            {images.length > MAX_DISPLAY_IMAGES && <ChevronButton
                 sx={{right: '10px'}}
                 onClick={() => changeImageRoll(1)}
             >
@@ -306,25 +310,27 @@ function ProductName(props) {
         <Typography variant="h4">
             {name}
         </Typography>
-        {label && <Label
+        <Label
             variant="filled"
-            color={labelColorMapper(label)}
+            color={(label.name === 'sale' && 'error') || 'info'}
             sx={{
                 textTransform: 'uppercase',
             }}
         >
-            {label}
-        </Label>}
+            {label.name}
+        </Label>
     </Stack>
 }
 
 const AddToCart = (props) => {
-    const {...rootProps} = props;
-    const {quantity, product} = useSelector(store => store.products);
-    const dispatch = useDispatch();
+    const {quantity, ...rootProps} = props;
+    const [currentQuantity, setCurrentQuantity] = useState(1)
     const largeScreen = useMediaQuery(theme => theme.breakpoints.up('md'));
     const handleChangeQuantity = (val) => {
-        dispatch(setQuantity(val))
+        const newQuantity = currentQuantity + val;
+        if (newQuantity > 0 && newQuantity <= quantity) {
+            setCurrentQuantity(newQuantity);
+        }
     }
 
     return <Stack
@@ -342,7 +348,7 @@ const AddToCart = (props) => {
                 Quantity:&nbsp;
             </Typography>
             <Button
-                variant={quantity > 0 && 'text' || 'disabled'}
+                variant={currentQuantity !== 1 && 'text' || 'disabled'}
                 size='small'
                 sx={{
                     height: '32px',
@@ -352,7 +358,7 @@ const AddToCart = (props) => {
                 onClick={() => handleChangeQuantity(-1)}
             >-</Button>
             <Input
-                value={quantity}
+                value={currentQuantity}
                 sx={{
                     width: '50px',
                     height: '32px',
@@ -362,7 +368,7 @@ const AddToCart = (props) => {
                 }}
             />
             <Button
-                variant={quantity < product.quantity && 'text' || 'disabled'}
+                variant={currentQuantity !== quantity && 'text' || 'disabled'}
                 size='small'
                 sx={{
                     height: '32px',
@@ -374,7 +380,9 @@ const AddToCart = (props) => {
         </Stack>
 
         <Button
-            variant={quantity ? 'outlined' : 'disabled'}
+            variant={
+                'outlined'
+            }
             sx={{
                 width: '175.8px',
                 height: '46px',

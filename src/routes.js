@@ -12,6 +12,7 @@ import ProductDetails from "./pages/ProductDetails";
 import ProductPage from "./pages/management/ProductPage";
 import RegisterPage from "./pages/RegisterPage";
 import ErrorPage from "./pages/errorPages/ErrorPage";
+import ProductPagePagin from "./pages/management/ProductPagePagin";
 
 // ----------------------------------------------------------------------
 
@@ -24,9 +25,10 @@ export default function Router() {
                 {element: <Navigate to="/dashboard/app"/>, index: true},
                 {path: 'app', element: <DashboardAppPage/>},
                 {path: 'management/user', element: <UserPage/>},
-                {path: 'management/product', element: <ProductPage/>},
+                {path: 'management/product-pagin', element: <ProductPage/>},
+                {path: 'management/product', element: <ProductPagePagin/>},
                 {path: 'products', element: <ProductsPage/>},
-                {path: 'product-details/*', element: <ProductDetails/>},
+                {path: 'products/details/:id', element: <ProductDetails/>},
                 {path: 'blog', element: <BlogPage/>},
             ],
         },
