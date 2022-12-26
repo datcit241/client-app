@@ -10,6 +10,7 @@ import {ProductCartWidget, ProductFilterSidebar, ProductList, ProductSort} from 
 import {listAccum, resetProducts, setPagingParams} from "../features/productsSlice";
 // mock
 import Loader from "../components/loader/Loader";
+import initialPagingParams from "../features/config/initialPagingParams";
 
 // ----------------------------------------------------------------------
 
@@ -22,7 +23,7 @@ export default function ProductsPage() {
 
     useEffect(() => {
         setIsLoadingNext(true);
-        dispatch(setPagingParams({pageNumber: 1, pageSize: 8}))
+        dispatch(setPagingParams({...initialPagingParams, pageSize: 8}))
         dispatch(resetProducts());
         dispatch(listAccum());
         setIsLoadingNext(false);

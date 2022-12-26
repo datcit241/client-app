@@ -37,7 +37,15 @@ UserListToolbar.propTypes = {
     onFilterName: PropTypes.func,
 };
 
-export default function UserListToolbar({numSelected, filterName, onFilterName, handleDelete}) {
+export default function UserListToolbar({
+                                            numSelected,
+                                            filterName,
+                                            onFilterName,
+                                            handleDelete,
+                                            handleSearch,
+                                            handleClear,
+                                            isSearching
+                                        }) {
     return (
         <StyledRoot
             sx={{
@@ -56,38 +64,61 @@ export default function UserListToolbar({numSelected, filterName, onFilterName, 
                     <StyledSearch
                         value={filterName}
                         onChange={onFilterName}
-                        placeholder="Search user..."
+                        placeholder="Search product..."
                         endAdornment={
-                            <Button
-                                sx={{
-                                    height: '36px'
-                                }}
-                            >
-                                <InputAdornment position="start">
-                                    <Iconify icon="eva:search-fill"
-                                             sx={{
-                                                 color: 'disabled',
-                                             }}/>
-                                </InputAdornment>
-                            </Button>
+                            <>
+                                {isSearching
+                                    ?
+                                    <Button
+                                        sx={{
+                                            height: '36px'
+                                        }}
+                                        onClick={() => handleSearch()}
+                                    >
+                                        <InputAdornment position="start">
+                                            <Iconify icon="eva:search-fill"
+                                                     sx={{
+                                                         color: 'disabled',
+                                                     }}/>
+                                        </InputAdornment>
+                                    </Button>
+                                    :
+                                    <Button
+                                        sx={{
+                                            boxSizing: 'border-box',
+                                            width: '25px',
+                                            height: '25px',
+                                            minWidth: '25px',
+                                            borderRadius: '50%',
+                                        }}
+                                        onClick={() => handleClear()}
+                                    >
+                                        &#10005;
+                                    </Button>
+                                }
+
+                            </>
                         }
                     />
                 </>
-            )}
+            )
+            }
 
-            {numSelected > 0 ? (
-                <Tooltip title="Delete">
-                    <IconButton onClick={handleDelete}>
-                        <Iconify icon="eva:trash-2-fill"/>
-                    </IconButton>
-                </Tooltip>
-            ) : (
-                <Tooltip title="Filter list">
-                    <IconButton>
-                        <Iconify icon="ic:round-filter-list"/>
-                    </IconButton>
-                </Tooltip>
-            )}
+            {
+                numSelected > 0 ? (
+                    <Tooltip title="Delete">
+                        <IconButton onClick={handleDelete}>
+                            <Iconify icon="eva:trash-2-fill"/>
+                        </IconButton>
+                    </Tooltip>
+                ) : (
+                    <Tooltip title="Filter list">
+                        <IconButton>
+                            <Iconify icon="ic:round-filter-list"/>
+                        </IconButton>
+                    </Tooltip>
+                )
+            }
         </StyledRoot>
-    );
+    )
 }

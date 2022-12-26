@@ -4,7 +4,7 @@ import {useState} from 'react';
 import {alpha} from '@mui/material/styles';
 import {Avatar, Box, Divider, IconButton, MenuItem, Popover, Stack, Typography} from '@mui/material';
 
-import {NavLink} from "react-router-dom";
+import {NavLink, useNavigate} from "react-router-dom";
 import {logOut} from "../../../features/userSlice"
 import account from "../../../_mock/account";
 // mocks_
@@ -14,14 +14,17 @@ import account from "../../../_mock/account";
 const MENU_OPTIONS = [
     {
         label: 'Home',
+        url: '/',
         icon: 'eva:home-fill',
     },
     {
         label: 'Profile',
+        url: '/profile',
         icon: 'eva:person-fill',
     },
     {
         label: 'Settings',
+        url: '/settings',
         icon: 'eva:settings-2-fill',
     },
 ];
@@ -38,8 +41,11 @@ export default function AccountPopover() {
         setOpen(event.currentTarget);
     };
 
-    const handleClose = () => {
+    const navigate = useNavigate();
+
+    const handleClose = (url) => {
         setOpen(null);
+        navigate(url);
     };
     const handleLogOut = () => {
         dispatch(logOut());
@@ -106,7 +112,7 @@ export default function AccountPopover() {
 
                 {user && <Stack sx={{p: 1}}>
                     {MENU_OPTIONS.map((option) => (
-                        <MenuItem key={option.label} onClick={handleClose}>
+                        <MenuItem key={option.label} onClick={() => handleClose(option.url)}>
                             {option.label}
                         </MenuItem>
                     ))}

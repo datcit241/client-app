@@ -1,7 +1,7 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import agent from "../api/agent";
-import initialPagingParams from "./config/initialPagingParams";
 import initialPagination from "./config/initialPagination";
+import initialPagingParams from "./config/initialPagingParams";
 import productMapper, {imgMapper, imgRollMapper} from "./mappers/productMapper";
 import imageRoll from "./config/imageRoll";
 
@@ -15,8 +15,6 @@ const initialState = {
     hasError: false,
     pagination: initialPagination,
     pagingParams: initialPagingParams,
-    order: null,
-    orderBy: null,
 }
 
 export const get = createAsyncThunk('products/get',
@@ -28,15 +26,25 @@ export const get = createAsyncThunk('products/get',
 export const list = createAsyncThunk('products/list',
     async (arg, {getState}) => {
         const {products: {pagingParams, pagination}} = getState();
-        if (pagingParams.pageNumber <= pagination.totalPages || !pagination.totalPages) {
-            const urlParams = new URLSearchParams();
-            urlParams.append('pageNumber', pagingParams.pageNumber.toString());
-            urlParams.append('pageSize', pagingParams.pageSize.toString())
+        // if (pagingParams.pageNumber <= pagination.totalPages || !pagination.totalPages) {
+        console.log('listing')
+        const urlParams = new URLSearchParams();
+        urlParams.append('pageNumber', pagingParams.pageNumber.toString());
+        urlParams.append('pageSize', pagingParams.pageSize.toString())
 
-            return agent.Products.list(urlParams);
+        if (pagingParams.orderBy && pagingParams.order) {
+            urlParams.append('order', pagingParams.order);
+            urlParams.append('orderBy', pagingParams.orderBy)
         }
 
-        return null;
+        if (pagingParams.searchString !== undefined && pagingParams.searchString !== null) {
+            urlParams.append('searchString', pagingParams.searchString)
+        }
+
+        return agent.Products.list(urlParams);
+        // }
+        //
+        // return null;
     }
 )
 
@@ -73,9 +81,13 @@ const productsSlice = createSlice({
     name: 'products',
     initialState,
     reducers: {
-        setPagingParams: (state, action) => {
-            if (action.payload.pageSize) state.pagingParams.pageSize = action.payload.pageSize;
-            if (action.payload.pageNumber) state.pagingParams.pageNumber = action.payload.pageNumber;
+        setPagingParams: (state, {payload}) => {
+            console.log(payload)
+            if (payload.pageSize) state.pagingParams.pageSize = payload.pageSize;
+            if (payload.pageNumber) state.pagingParams.pageNumber = payload.pageNumber;
+            if (payload.order) state.pagingParams.order = payload.order;
+            if (payload.orderBy) state.pagingParams.orderBy = payload.orderBy;
+            state.pagingParams.searchString = payload.searchString;
         },
         resetProducts: (state) => {
             state.products = [];

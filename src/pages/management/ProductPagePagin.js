@@ -87,6 +87,12 @@ export default function ProductPagePagin(props) {
 
         if (params.pageNumber) newParams.pageNumber = params.pageNumber;
         if (params.pageSize) newParams.pageSize = params.pageSize;
+        if (params.order) newParams.order = params.order;
+        if (params.orderBy) newParams.orderBy = params.orderBy;
+        if (params.searchString !== undefined && params.searchString !== null) {
+            newParams.searchString = params.searchString;
+        }
+        console.log(newParams)
 
         dispatch(setPagingParams(newParams));
     }
@@ -126,8 +132,15 @@ export default function ProductPagePagin(props) {
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
+        const ordr = isAsc ? 'desc' : 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
+        if (ordr !== pagingParams.order || property !== pagingParams.orderBy) {
+            console.log('setting paging params')
+            console.log(ordr, property)
+            handleSetPaginParams({pageNumber: 1, order: ordr, orderBy: property});
+            console.log(pagingParams)
+        }
     };
 
     const handleSelectAllClick = (event) => {
@@ -155,7 +168,9 @@ export default function ProductPagePagin(props) {
     };
 
     const handleChangePage = (event, newPage) => {
+        console.log('changing page', filterName)
         handleSetPaginParams({pageNumber: newPage + 1});
+        console.log('after page changed', filterName)
     };
 
     const handleChangeRowsPerPage = (event) => {
@@ -163,9 +178,20 @@ export default function ProductPagePagin(props) {
     };
 
     const handleFilterByName = (event) => {
-        handleSetPaginParams({pageNumber: 1})
+        // handleSetPaginParams({pageNumber: 1})
         setFilterName(event.target.value);
     };
+
+    const handleSearch = (event) => {
+        console.log('searching for', filterName)
+        handleSetPaginParams({searchString: filterName, pageNumber: 1});
+    }
+
+    const handleClear = (event) => {
+        console.log('Clearing')
+        handleSetPaginParams({searchString: '', pageNumber: 1});
+        setFilterName('');
+    }
 
     const navigator = useNavigate();
     const handleDelete = (products) => {
@@ -195,10 +221,10 @@ export default function ProductPagePagin(props) {
             <Container>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4" gutterBottom>
-                        User
+                        Product
                     </Typography>
                     <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill"/>}>
-                        New User
+                        New Product
                     </Button>
                 </Stack>
 
@@ -208,6 +234,9 @@ export default function ProductPagePagin(props) {
                         filterName={filterName}
                         onFilterName={handleFilterByName}
                         handleDelete={() => setAction({label: 'Delete', handler: actionHandler.delSelected})}
+                        handleSearch={handleSearch}
+                        isSearching={!pagingParams.searchString || pagingParams.searchString !== filterName}
+                        handleClear={handleClear}
                     />
 
                     <Scrollbar>

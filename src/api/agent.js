@@ -68,7 +68,8 @@ const Products = {
 const Account = {
     current: () => requests.get('accounts'),
     login: (user) => requests.post('/accounts/login', user),
-    register: (user) => requests.post('/accounts/register', user)
+    register: (user) => requests.post('/accounts/register', user),
+    updateBio: (bio) => requests.put('/users', bio)
 }
 
 const agent = {

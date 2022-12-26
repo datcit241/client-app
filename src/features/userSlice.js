@@ -13,6 +13,13 @@ export const login = createAsyncThunk('user/login',
     }
 )
 
+export const updateBio = createAsyncThunk('user/updateBio',
+    async (body) => {
+        await agent.Account.updateBio({bio: body});
+        return body;
+    }
+)
+
 const userSlice = createSlice({
     name: 'user',
     initialState,
@@ -39,6 +46,9 @@ const userSlice = createSlice({
             state.isLoading = false;
             state.hasError = true;
             console.log("error")
+        });
+        addCase(updateBio.fulfilled, (state, {payload}) => {
+            state.user.bio = payload;
         });
     }
 })

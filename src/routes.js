@@ -13,6 +13,7 @@ import ProductPage from "./pages/management/ProductPage";
 import RegisterPage from "./pages/RegisterPage";
 import ErrorPage from "./pages/errorPages/ErrorPage";
 import ProductPagePagin from "./pages/management/ProductPagePagin";
+import Profile from "./pages/Profile";
 
 // ----------------------------------------------------------------------
 
@@ -35,6 +36,10 @@ export default function Router() {
         {
             path: 'login',
             element: <LoginPage/>,
+        },
+        {
+            path: 'profile',
+            element: <Profile/>,
         },
         {
             path: 'register',
